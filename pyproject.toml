@@ -1,0 +1,98 @@
+[project]
+name = "slack-gfm"
+version = "0.1.0"
+description = "Convert between Slack message formats (Mrkdwn, Rich Text) and GitHub Flavored Markdown with AST manipulation"
+readme = "README.md"
+authors = [
+    { name = "Roberto Etcheverry", email = "143276+retcheverry@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+license = { text = "AGPL-3.0-or-later" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Communications :: Chat",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup",
+    "Typing :: Typed",
+]
+keywords = ["slack", "markdown", "gfm", "converter", "ast", "mrkdwn", "rich-text"]
+
+dependencies = [
+    "linkify-it-py>=2.0.3",
+    "markdown-it-py>=3.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.13.3",
+    "twine>=6.2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/retcheverry/slack-gfm"
+Documentation = "https://github.com/retcheverry/slack-gfm/tree/main/docs"
+Repository = "https://github.com/retcheverry/slack-gfm"
+Issues = "https://github.com/retcheverry/slack-gfm/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/slack_gfm"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--cov=slack_gfm",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=85",
+]
+
+[tool.coverage.run]
+source = ["src/slack_gfm"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

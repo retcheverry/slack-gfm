@@ -1,5 +1,7 @@
 """Edge case tests to improve coverage."""
 
+from typing import cast
+
 from slack_gfm import gfm_to_rich_text, mrkdwn_to_gfm, rich_text_to_gfm
 from slack_gfm.ast import (
     Document,
@@ -17,38 +19,38 @@ from slack_gfm.renderers import render_gfm, render_rich_text
 class TestParserEdgeCases:
     """Test edge cases in parsers."""
 
-    def test_gfm_empty_link(self):
+    def test_gfm_empty_link(self) -> None:
         """Test GFM parser with empty link."""
         ast = parse_gfm("[text]()")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         # Should still create a link even with empty URL
         assert len(para.children) > 0
 
-    def test_gfm_table(self):
+    def test_gfm_table(self) -> None:
         """Test GFM table parsing."""
         ast = parse_gfm("| Col1 | Col2 |\n|------|------|\n| A | B |")
         # GFM extension for tables might not be enabled in markdown-it-py by default
         # Just verify it parses without error
         assert isinstance(ast, Document)
 
-    def test_gfm_thematic_break(self):
+    def test_gfm_thematic_break(self) -> None:
         """Test horizontal rule parsing."""
         ast = parse_gfm("---")
         assert isinstance(ast.children[0], HorizontalRule)
 
-    def test_mrkdwn_nested_formatting(self):
+    def test_mrkdwn_nested_formatting(self) -> None:
         """Test nested formatting in mrkdwn."""
         ast = parse_mrkdwn("*_bold italic_*")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         # Should parse nested styles
         assert len(para.children) > 0
 
-    def test_mrkdwn_multiline_code(self):
+    def test_mrkdwn_multiline_code(self) -> None:
         """Test multiline code block."""
         ast = parse_mrkdwn("```\nline1\nline2\n```")
         assert any(hasattr(child, "content") for child in ast.children)
 
-    def test_rich_text_emoji(self):
+    def test_rich_text_emoji(self) -> None:
         """Test emoji parsing."""
         rich_text = {
             "type": "rich_text",
@@ -60,10 +62,10 @@ class TestParserEdgeCases:
             ],
         }
         ast = parse_rich_text(rich_text)
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Emoji)
 
-    def test_rich_text_link_with_style(self):
+    def test_rich_text_link_with_style(self) -> None:
         """Test link with style in rich text."""
         rich_text = {
             "type": "rich_text",
@@ -84,7 +86,7 @@ class TestParserEdgeCases:
         # Should handle styled links
         assert len(ast.children) > 0
 
-    def test_rich_text_date(self):
+    def test_rich_text_date(self) -> None:
         """Test date element."""
         rich_text = {
             "type": "rich_text",
@@ -105,7 +107,7 @@ class TestParserEdgeCases:
         # Should parse date element
         assert len(ast.children) > 0
 
-    def test_rich_text_usergroup(self):
+    def test_rich_text_usergroup(self) -> None:
         """Test usergroup mention."""
         rich_text = {
             "type": "rich_text",
@@ -124,14 +126,14 @@ class TestParserEdgeCases:
 class TestRendererEdgeCases:
     """Test edge cases in renderers."""
 
-    def test_gfm_heading_levels(self):
+    def test_gfm_heading_levels(self) -> None:
         """Test different heading levels."""
         for level in range(1, 7):
             doc = Document(children=[Heading(level=level, children=[Text(content="Title")])])
             result = render_gfm(doc)
             assert "#" * level in result
 
-    def test_gfm_table_rendering(self):
+    def test_gfm_table_rendering(self) -> None:
         """Test table rendering."""
         doc = Document(
             children=[
@@ -145,14 +147,14 @@ class TestRendererEdgeCases:
         result = render_gfm(doc)
         assert "|" in result
 
-    def test_rich_text_heading(self):
+    def test_rich_text_heading(self) -> None:
         """Test heading in rich text (should render as section)."""
         doc = Document(children=[Heading(level=1, children=[Text(content="Title")])])
         result = render_rich_text(doc)
         # Headings become sections in rich text
         assert result["elements"][0]["type"] == "rich_text_section"
 
-    def test_rich_text_table(self):
+    def test_rich_text_table(self) -> None:
         """Test table in rich text (should render as section)."""
         doc = Document(
             children=[
@@ -167,14 +169,14 @@ class TestRendererEdgeCases:
         # Tables become sections in rich text
         assert result["type"] == "rich_text"
 
-    def test_rich_text_horizontal_rule(self):
+    def test_rich_text_horizontal_rule(self) -> None:
         """Test horizontal rule in rich text."""
         doc = Document(children=[HorizontalRule()])
         result = render_rich_text(doc)
         # Should render something
         assert result["type"] == "rich_text"
 
-    def test_rich_text_emoji(self):
+    def test_rich_text_emoji(self) -> None:
         """Test emoji rendering."""
         doc = Document(children=[Paragraph(children=[Emoji(name="smile")])])
         result = render_rich_text(doc)
@@ -182,7 +184,7 @@ class TestRendererEdgeCases:
         assert elem["type"] == "emoji"
         assert elem["name"] == "smile"
 
-    def test_rich_text_link_no_children(self):
+    def test_rich_text_link_no_children(self) -> None:
         """Test link without children."""
         from slack_gfm.ast import Link
 
@@ -199,7 +201,7 @@ class TestRendererEdgeCases:
 class TestConversionEdgeCases:
     """Test edge cases in high-level conversion functions."""
 
-    def test_rich_text_to_gfm_with_all_mappings(self):
+    def test_rich_text_to_gfm_with_all_mappings(self) -> None:
         """Test conversion with all mapping types."""
         rich_text = {
             "type": "rich_text",
@@ -224,7 +226,7 @@ class TestConversionEdgeCases:
         assert "general" in result
         assert "devs" in result
 
-    def test_gfm_to_rich_text_with_mappings(self):
+    def test_gfm_to_rich_text_with_mappings(self) -> None:
         """Test GFM to rich text with mappings."""
         gfm = "[@alice](slack://user?id=U1&name=alice)"
         result = gfm_to_rich_text(gfm, user_map={"U1": "alice"})
@@ -232,7 +234,7 @@ class TestConversionEdgeCases:
         elem = result["elements"][0]["elements"][0]
         assert elem["user_id"] == "U1"
 
-    def test_mrkdwn_complex(self):
+    def test_mrkdwn_complex(self) -> None:
         """Test complex mrkdwn conversion."""
         mrkdwn = "*bold* _italic_ ~strike~ `code` <@U1> <#C1> <!here> <http://example.com|link>"
         result = mrkdwn_to_gfm(mrkdwn)
@@ -248,7 +250,7 @@ class TestConversionEdgeCases:
 class TestVisitorEdgeCases:
     """Test visitor edge cases."""
 
-    def test_visitor_methods(self):
+    def test_visitor_methods(self) -> None:
         """Test all visitor methods are callable."""
         from slack_gfm.ast import NodeVisitor
 

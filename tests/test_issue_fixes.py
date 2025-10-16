@@ -18,7 +18,7 @@ class TestIssue02:
     Actual: ```no newlines```\n```  (WRONG - extra newline + ```)
     """
 
-    def test_inline_code_block_no_newlines(self):
+    def test_inline_code_block_no_newlines(self) -> None:
         """Test code block on single line without newlines."""
         mrkdwn = "```no newlines```"
         result = mrkdwn_to_gfm(mrkdwn)
@@ -42,7 +42,7 @@ class TestIssue05:
     Actual: ```no newline at start\n\n```  (WRONG - extra newline)
     """
 
-    def test_code_block_content_on_opening_line(self):
+    def test_code_block_content_on_opening_line(self) -> None:
         """Test code block with content on same line as opening ```."""
         mrkdwn = "```no newline at start\n```"
         result = mrkdwn_to_gfm(mrkdwn)
@@ -68,7 +68,7 @@ class TestIssue06:
            (WRONG - missing newline after opening ```)
     """
 
-    def test_multiline_code_block_no_newline_after_opening(self):
+    def test_multiline_code_block_no_newline_after_opening(self) -> None:
         """Test multiline code block with content starting on opening line."""
         mrkdwn = "```no newline at start\nor at the end\nthe code block includes newlines though```"
         result = mrkdwn_to_gfm(mrkdwn)
@@ -98,7 +98,7 @@ class TestIssue07:
     Actual: ```\n<https://example.com>\n```  (WRONG - brackets not removed)
     """
 
-    def test_angle_brackets_removed_in_code_blocks(self):
+    def test_angle_brackets_removed_in_code_blocks(self) -> None:
         """Test that angle brackets around URLs are removed in code blocks."""
         mrkdwn = "```\n<https://example.com>\n```"
         result = mrkdwn_to_gfm(mrkdwn)
@@ -111,7 +111,7 @@ class TestIssue07:
         assert "<" not in result, "Should not contain < in code block"
         assert ">" not in result, "Should not contain > in code block"
 
-    def test_angle_brackets_with_multiple_urls(self):
+    def test_angle_brackets_with_multiple_urls(self) -> None:
         """Test multiple URLs with angle brackets in same code block."""
         mrkdwn = "```\n<https://api.example.com>\n<https://docs.example.com>\n```"
         result = mrkdwn_to_gfm(mrkdwn)
@@ -122,7 +122,7 @@ class TestIssue07:
         assert "<" not in result
         assert ">" not in result
 
-    def test_angle_brackets_not_around_urls(self):
+    def test_angle_brackets_not_around_urls(self) -> None:
         """Test angle brackets that aren't around URLs (should be kept)."""
         mrkdwn = "```\nif (x > 5 && y < 10) {}\n```"
         result = mrkdwn_to_gfm(mrkdwn)
@@ -143,7 +143,7 @@ class TestIssue08:
     Actual RT:   {"type": "text", "text": "xyz\n"}  (WRONG - extra \n)
     """
 
-    def test_gfm_to_rich_text_no_trailing_newline(self):
+    def test_gfm_to_rich_text_no_trailing_newline(self) -> None:
         """Test that code block content doesn't gain trailing newline."""
         gfm = "```\nxyz\n```"
         result = gfm_to_rich_text(gfm)
@@ -163,7 +163,7 @@ class TestIssue08:
         assert text_elem["text"] == "xyz", f"Expected 'xyz', got {repr(text_elem['text'])}"
         assert not text_elem["text"].endswith("\n"), "Text should not end with newline"
 
-    def test_gfm_to_rich_text_multiline_no_extra_newline(self):
+    def test_gfm_to_rich_text_multiline_no_extra_newline(self) -> None:
         """Test multiline code block doesn't add extra trailing newline."""
         gfm = "```\nline1\nline2\nline3\n```"
         result = gfm_to_rich_text(gfm)
@@ -180,7 +180,7 @@ class TestIssue08:
             f"Should have 2 newlines, got {text_elem['text'].count(chr(10))}"
         )
 
-    def test_gfm_to_rich_text_empty_code_block(self):
+    def test_gfm_to_rich_text_empty_code_block(self) -> None:
         """Test empty code block edge case."""
         gfm = "```\n\n```"
         result = gfm_to_rich_text(gfm)
@@ -196,7 +196,7 @@ class TestIssue08:
 class TestCodeBlockRoundTrip:
     """Test that code blocks can round-trip through conversions without data loss."""
 
-    def test_simple_code_block_roundtrip_mrkdwn_gfm_richtext(self):
+    def test_simple_code_block_roundtrip_mrkdwn_gfm_richtext(self) -> None:
         """Test mrkdwn → GFM → Rich Text → GFM preserves content.
 
         Note: Slack's Rich Text format strips trailing newlines from code blocks,
@@ -220,7 +220,7 @@ class TestCodeBlockRoundTrip:
         # After normalization, should be inline format (no trailing newlines in Rich Text)
         assert gfm_roundtrip == "```hello world```"
 
-    def test_code_block_with_special_chars_roundtrip(self):
+    def test_code_block_with_special_chars_roundtrip(self) -> None:
         """Test code block with special characters preserves them exactly."""
         original_mrkdwn = "```\nversion: 3.0.202\nhost: 10.64.64.98\npattern: test.*regex\n```"
 

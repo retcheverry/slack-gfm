@@ -26,25 +26,25 @@ from slack_gfm.renderers import render_gfm, render_rich_text
 class TestGFMRenderer:
     """Test GFM renderer."""
 
-    def test_render_paragraph(self):
+    def test_render_paragraph(self) -> None:
         """Test paragraph rendering."""
         doc = Document(children=[Paragraph(children=[Text(content="Hello")])])
         result = render_gfm(doc)
         assert result == "Hello"
 
-    def test_render_bold(self):
+    def test_render_bold(self) -> None:
         """Test bold rendering."""
         doc = Document(children=[Paragraph(children=[Bold(children=[Text(content="bold")])])])
         result = render_gfm(doc)
         assert "**bold**" in result
 
-    def test_render_italic(self):
+    def test_render_italic(self) -> None:
         """Test italic rendering."""
         doc = Document(children=[Paragraph(children=[Italic(children=[Text(content="italic")])])])
         result = render_gfm(doc)
         assert "*italic*" in result
 
-    def test_render_strikethrough(self):
+    def test_render_strikethrough(self) -> None:
         """Test strikethrough rendering."""
         doc = Document(
             children=[Paragraph(children=[Strikethrough(children=[Text(content="strike")])])]
@@ -52,26 +52,26 @@ class TestGFMRenderer:
         result = render_gfm(doc)
         assert "~~strike~~" in result
 
-    def test_render_code(self):
+    def test_render_code(self) -> None:
         """Test inline code rendering."""
         doc = Document(children=[Paragraph(children=[Code(content="code")])])
         result = render_gfm(doc)
         assert "`code`" in result
 
-    def test_render_heading(self):
+    def test_render_heading(self) -> None:
         """Test heading rendering."""
         doc = Document(children=[Heading(level=1, children=[Text(content="Title")])])
         result = render_gfm(doc)
         assert result == "# Title"
 
-    def test_render_code_block(self):
+    def test_render_code_block(self) -> None:
         """Test code block rendering."""
         doc = Document(children=[CodeBlock(content="print('hello')", language="python")])
         result = render_gfm(doc)
         assert "```python" in result
         assert "print('hello')" in result
 
-    def test_render_code_block_no_language(self):
+    def test_render_code_block_no_language(self) -> None:
         """Test code block without language.
 
         Code blocks with no newlines render as inline format for round-trip consistency.
@@ -80,7 +80,7 @@ class TestGFMRenderer:
         result = render_gfm(doc)
         assert "```code```" in result
 
-    def test_render_list(self):
+    def test_render_list(self) -> None:
         """Test list rendering."""
         doc = Document(
             children=[
@@ -97,7 +97,7 @@ class TestGFMRenderer:
         assert "- Item 1" in result
         assert "- Item 2" in result
 
-    def test_render_ordered_list(self):
+    def test_render_ordered_list(self) -> None:
         """Test ordered list rendering."""
         doc = Document(
             children=[
@@ -114,7 +114,7 @@ class TestGFMRenderer:
         assert "1. First" in result
         assert "2. Second" in result
 
-    def test_render_quote(self):
+    def test_render_quote(self) -> None:
         """Test quote rendering."""
         doc = Document(
             children=[Quote(children=[Paragraph(children=[Text(content="quoted text")])])]
@@ -122,7 +122,7 @@ class TestGFMRenderer:
         result = render_gfm(doc)
         assert "> quoted text" in result
 
-    def test_render_link(self):
+    def test_render_link(self) -> None:
         """Test link rendering."""
         doc = Document(
             children=[
@@ -134,7 +134,7 @@ class TestGFMRenderer:
         result = render_gfm(doc)
         assert "[Link](https://example.com)" in result
 
-    def test_render_user_mention(self):
+    def test_render_user_mention(self) -> None:
         """Test user mention rendering."""
         doc = Document(
             children=[Paragraph(children=[UserMention(user_id="U123", username="john")])]
@@ -142,14 +142,14 @@ class TestGFMRenderer:
         result = render_gfm(doc)
         assert "[@john](slack://user?id=U123&name=john)" in result
 
-    def test_render_user_mention_no_name(self):
+    def test_render_user_mention_no_name(self) -> None:
         """Test user mention without username."""
         doc = Document(children=[Paragraph(children=[UserMention(user_id="U123")])])
         result = render_gfm(doc)
         # When no username is provided, just the ID is shown without @
         assert "[U123](slack://user?id=U123)" in result
 
-    def test_render_channel_mention(self):
+    def test_render_channel_mention(self) -> None:
         """Test channel mention rendering."""
         doc = Document(
             children=[
@@ -159,7 +159,7 @@ class TestGFMRenderer:
         result = render_gfm(doc)
         assert "[#general](slack://channel?id=C123&name=general)" in result
 
-    def test_render_usergroup_mention(self):
+    def test_render_usergroup_mention(self) -> None:
         """Test usergroup mention rendering."""
         doc = Document(
             children=[
@@ -171,13 +171,13 @@ class TestGFMRenderer:
         result = render_gfm(doc)
         assert "[@engineers](slack://usergroup?id=S123&name=engineers)" in result
 
-    def test_render_broadcast(self):
+    def test_render_broadcast(self) -> None:
         """Test broadcast rendering."""
         doc = Document(children=[Paragraph(children=[Broadcast(range="here")])])
         result = render_gfm(doc)
         assert "[@here](slack://broadcast?type=here)" in result
 
-    def test_render_horizontal_rule(self):
+    def test_render_horizontal_rule(self) -> None:
         """Test horizontal rule rendering."""
         doc = Document(children=[HorizontalRule()])
         result = render_gfm(doc)
@@ -187,7 +187,7 @@ class TestGFMRenderer:
 class TestRichTextRenderer:
     """Test Rich Text renderer."""
 
-    def test_render_paragraph(self):
+    def test_render_paragraph(self) -> None:
         """Test paragraph rendering."""
         doc = Document(children=[Paragraph(children=[Text(content="Hello")])])
         result = render_rich_text(doc)
@@ -196,21 +196,21 @@ class TestRichTextRenderer:
         assert section["type"] == "rich_text_section"
         assert section["elements"][0]["text"] == "Hello"
 
-    def test_render_bold(self):
+    def test_render_bold(self) -> None:
         """Test bold rendering."""
         doc = Document(children=[Paragraph(children=[Bold(children=[Text(content="bold")])])])
         result = render_rich_text(doc)
         elem = result["elements"][0]["elements"][0]
         assert elem["style"]["bold"] is True
 
-    def test_render_italic(self):
+    def test_render_italic(self) -> None:
         """Test italic rendering."""
         doc = Document(children=[Paragraph(children=[Italic(children=[Text(content="italic")])])])
         result = render_rich_text(doc)
         elem = result["elements"][0]["elements"][0]
         assert elem["style"]["italic"] is True
 
-    def test_render_strikethrough(self):
+    def test_render_strikethrough(self) -> None:
         """Test strikethrough rendering."""
         doc = Document(
             children=[Paragraph(children=[Strikethrough(children=[Text(content="strike")])])]
@@ -219,7 +219,7 @@ class TestRichTextRenderer:
         elem = result["elements"][0]["elements"][0]
         assert elem["style"]["strike"] is True
 
-    def test_render_code(self):
+    def test_render_code(self) -> None:
         """Test inline code rendering."""
         doc = Document(children=[Paragraph(children=[Code(content="code")])])
         result = render_rich_text(doc)
@@ -227,7 +227,7 @@ class TestRichTextRenderer:
         assert elem["type"] == "text"
         assert elem["style"]["code"] is True
 
-    def test_render_code_block(self):
+    def test_render_code_block(self) -> None:
         """Test code block rendering."""
         doc = Document(children=[CodeBlock(content="print('hello')")])
         result = render_rich_text(doc)
@@ -235,7 +235,7 @@ class TestRichTextRenderer:
         assert block["type"] == "rich_text_preformatted"
         assert block["elements"][0]["text"] == "print('hello')"
 
-    def test_render_list(self):
+    def test_render_list(self) -> None:
         """Test list rendering."""
         doc = Document(
             children=[
@@ -250,7 +250,7 @@ class TestRichTextRenderer:
         assert list_elem["type"] == "rich_text_list"
         assert list_elem["style"] == "bullet"
 
-    def test_render_ordered_list(self):
+    def test_render_ordered_list(self) -> None:
         """Test ordered list rendering."""
         doc = Document(
             children=[
@@ -264,14 +264,14 @@ class TestRichTextRenderer:
         list_elem = result["elements"][0]
         assert list_elem["style"] == "ordered"
 
-    def test_render_quote(self):
+    def test_render_quote(self) -> None:
         """Test quote rendering."""
         doc = Document(children=[Quote(children=[Paragraph(children=[Text(content="quoted")])])])
         result = render_rich_text(doc)
         quote = result["elements"][0]
         assert quote["type"] == "rich_text_quote"
 
-    def test_render_user_mention(self):
+    def test_render_user_mention(self) -> None:
         """Test user mention rendering."""
         doc = Document(children=[Paragraph(children=[UserMention(user_id="U123")])])
         result = render_rich_text(doc)
@@ -279,7 +279,7 @@ class TestRichTextRenderer:
         assert elem["type"] == "user"
         assert elem["user_id"] == "U123"
 
-    def test_render_channel_mention(self):
+    def test_render_channel_mention(self) -> None:
         """Test channel mention rendering."""
         doc = Document(children=[Paragraph(children=[ChannelMention(channel_id="C123")])])
         result = render_rich_text(doc)
@@ -287,7 +287,7 @@ class TestRichTextRenderer:
         assert elem["type"] == "channel"
         assert elem["channel_id"] == "C123"
 
-    def test_render_broadcast(self):
+    def test_render_broadcast(self) -> None:
         """Test broadcast rendering."""
         doc = Document(children=[Paragraph(children=[Broadcast(range="here")])])
         result = render_rich_text(doc)
@@ -295,7 +295,7 @@ class TestRichTextRenderer:
         assert elem["type"] == "broadcast"
         assert elem["range"] == "here"
 
-    def test_render_link(self):
+    def test_render_link(self) -> None:
         """Test link rendering."""
         doc = Document(
             children=[

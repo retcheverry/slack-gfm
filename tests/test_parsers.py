@@ -1,5 +1,7 @@
 """Comprehensive parser tests."""
 
+from typing import cast
+
 from slack_gfm.ast import (
     Bold,
     Broadcast,
@@ -24,7 +26,7 @@ from slack_gfm.renderers import render_gfm
 class TestGFMParser:
     """Test GFM parser."""
 
-    def test_parse_headings(self):
+    def test_parse_headings(self) -> None:
         """Test heading parsing."""
         ast = parse_gfm("# Heading 1\n## Heading 2")
         assert len(ast.children) == 2
@@ -33,7 +35,7 @@ class TestGFMParser:
         assert isinstance(ast.children[1], Heading)
         assert ast.children[1].level == 2
 
-    def test_parse_code_block(self):
+    def test_parse_code_block(self) -> None:
         """Test code block parsing."""
         ast = parse_gfm("```python\nprint('hello')\n```")
         assert len(ast.children) == 1
@@ -41,7 +43,7 @@ class TestGFMParser:
         assert ast.children[0].language == "python"
         assert "print('hello')" in ast.children[0].content
 
-    def test_parse_list(self):
+    def test_parse_list(self) -> None:
         """Test list parsing."""
         ast = parse_gfm("- Item 1\n- Item 2")
         assert len(ast.children) == 1
@@ -49,124 +51,124 @@ class TestGFMParser:
         assert not ast.children[0].ordered
         assert len(ast.children[0].children) == 2
 
-    def test_parse_ordered_list(self):
+    def test_parse_ordered_list(self) -> None:
         """Test ordered list parsing."""
         ast = parse_gfm("1. First\n2. Second")
         assert len(ast.children) == 1
         assert isinstance(ast.children[0], List)
         assert ast.children[0].ordered
 
-    def test_parse_blockquote(self):
+    def test_parse_blockquote(self) -> None:
         """Test blockquote parsing."""
         ast = parse_gfm("> This is a quote")
         assert len(ast.children) == 1
         assert isinstance(ast.children[0], Quote)
 
-    def test_parse_slack_user_url(self):
+    def test_parse_slack_user_url(self) -> None:
         """Test parsing slack:// user URL."""
         ast = parse_gfm("[@john](slack://user?id=U123&name=john)")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], UserMention)
         assert para.children[0].user_id == "U123"
         assert para.children[0].username == "john"
 
-    def test_parse_slack_channel_url(self):
+    def test_parse_slack_channel_url(self) -> None:
         """Test parsing slack:// channel URL."""
         ast = parse_gfm("[#general](slack://channel?id=C123&name=general)")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], ChannelMention)
         assert para.children[0].channel_id == "C123"
         assert para.children[0].channel_name == "general"
 
-    def test_parse_slack_broadcast_url(self):
+    def test_parse_slack_broadcast_url(self) -> None:
         """Test parsing slack:// broadcast URL."""
         ast = parse_gfm("[@here](slack://broadcast?type=here)")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Broadcast)
         assert para.children[0].range == "here"
 
-    def test_parse_slack_usergroup_url(self):
+    def test_parse_slack_usergroup_url(self) -> None:
         """Test parsing slack:// usergroup URL."""
         ast = parse_gfm("[@engineers](slack://usergroup?id=S123&name=engineers)")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], UsergroupMention)
 
 
 class TestMrkdwnParser:
     """Test mrkdwn parser."""
 
-    def test_parse_bold(self):
+    def test_parse_bold(self) -> None:
         """Test bold parsing."""
         ast = parse_mrkdwn("*bold text*")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Bold)
 
-    def test_parse_italic(self):
+    def test_parse_italic(self) -> None:
         """Test italic parsing."""
         ast = parse_mrkdwn("_italic text_")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Italic)
 
-    def test_parse_strikethrough(self):
+    def test_parse_strikethrough(self) -> None:
         """Test strikethrough parsing."""
         ast = parse_mrkdwn("~strike~")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Strikethrough)
 
-    def test_parse_code(self):
+    def test_parse_code(self) -> None:
         """Test inline code parsing."""
         ast = parse_mrkdwn("`code`")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Code)
 
-    def test_parse_code_block(self):
+    def test_parse_code_block(self) -> None:
         """Test code block parsing."""
         ast = parse_mrkdwn("```\ncode block\n```")
         assert isinstance(ast.children[0], CodeBlock)
 
-    def test_parse_user_mention(self):
+    def test_parse_user_mention(self) -> None:
         """Test user mention parsing."""
         ast = parse_mrkdwn("<@U123|john>")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], UserMention)
         assert para.children[0].user_id == "U123"
         assert para.children[0].username == "john"
 
-    def test_parse_user_mention_no_name(self):
+    def test_parse_user_mention_no_name(self) -> None:
         """Test user mention without name."""
         ast = parse_mrkdwn("<@U123>")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], UserMention)
         assert para.children[0].user_id == "U123"
 
-    def test_parse_channel_mention(self):
+    def test_parse_channel_mention(self) -> None:
         """Test channel mention parsing."""
         ast = parse_mrkdwn("<#C123|general>")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], ChannelMention)
         assert para.children[0].channel_id == "C123"
 
-    def test_parse_link(self):
+    def test_parse_link(self) -> None:
         """Test link parsing."""
         ast = parse_mrkdwn("<https://example.com|Example>")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Link)
         assert para.children[0].url == "https://example.com"
 
-    def test_parse_link_no_text(self):
+    def test_parse_link_no_text(self) -> None:
         """Test link without text."""
         ast = parse_mrkdwn("<https://example.com>")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Link)
 
-    def test_parse_broadcast(self):
+    def test_parse_broadcast(self) -> None:
         """Test broadcast parsing."""
         ast = parse_mrkdwn("<!here>")
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Broadcast)
         assert para.children[0].range == "here"
 
-    def test_parse_blockquote(self):
+    def test_parse_blockquote(self) -> None:
         """Test blockquote parsing.
 
         Note: Slack mrkdwn uses &gt; (HTML entity) for blockquotes, not plain >.
@@ -174,7 +176,7 @@ class TestMrkdwnParser:
         ast = parse_mrkdwn("&gt; quote text")
         assert isinstance(ast.children[0], Quote)
 
-    def test_parse_list(self):
+    def test_parse_list(self) -> None:
         """Test list parsing.
 
         Slack mrkdwn DOES recognize bullet lists using • character.
@@ -188,7 +190,7 @@ class TestMrkdwnParser:
 class TestRichTextParser:
     """Test Rich Text parser."""
 
-    def test_parse_simple_section(self):
+    def test_parse_simple_section(self) -> None:
         """Test simple section parsing."""
         rich_text = {
             "type": "rich_text",
@@ -201,11 +203,11 @@ class TestRichTextParser:
         }
         ast = parse_rich_text(rich_text)
         assert len(ast.children) == 1
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Text)
         assert para.children[0].content == "Hello"
 
-    def test_parse_styled_text(self):
+    def test_parse_styled_text(self) -> None:
         """Test styled text parsing."""
         rich_text = {
             "type": "rich_text",
@@ -225,12 +227,12 @@ class TestRichTextParser:
             ],
         }
         ast = parse_rich_text(rich_text)
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Bold)
         assert isinstance(para.children[1], Italic)
         assert isinstance(para.children[2], Strikethrough)
 
-    def test_parse_list(self):
+    def test_parse_list(self) -> None:
         """Test list parsing."""
         rich_text = {
             "type": "rich_text",
@@ -251,7 +253,7 @@ class TestRichTextParser:
         assert isinstance(ast.children[0], List)
         assert not ast.children[0].ordered
 
-    def test_parse_code_block(self):
+    def test_parse_code_block(self) -> None:
         """Test code block parsing."""
         rich_text = {
             "type": "rich_text",
@@ -265,7 +267,7 @@ class TestRichTextParser:
         ast = parse_rich_text(rich_text)
         assert isinstance(ast.children[0], CodeBlock)
 
-    def test_parse_quote(self):
+    def test_parse_quote(self) -> None:
         """Test quote parsing."""
         rich_text = {
             "type": "rich_text",
@@ -279,7 +281,7 @@ class TestRichTextParser:
         ast = parse_rich_text(rich_text)
         assert isinstance(ast.children[0], Quote)
 
-    def test_parse_user_mention(self):
+    def test_parse_user_mention(self) -> None:
         """Test user mention parsing."""
         rich_text = {
             "type": "rich_text",
@@ -291,10 +293,10 @@ class TestRichTextParser:
             ],
         }
         ast = parse_rich_text(rich_text)
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], UserMention)
 
-    def test_parse_channel_mention(self):
+    def test_parse_channel_mention(self) -> None:
         """Test channel mention parsing."""
         rich_text = {
             "type": "rich_text",
@@ -306,10 +308,10 @@ class TestRichTextParser:
             ],
         }
         ast = parse_rich_text(rich_text)
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], ChannelMention)
 
-    def test_parse_broadcast(self):
+    def test_parse_broadcast(self) -> None:
         """Test broadcast parsing."""
         rich_text = {
             "type": "rich_text",
@@ -321,10 +323,10 @@ class TestRichTextParser:
             ],
         }
         ast = parse_rich_text(rich_text)
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Broadcast)
 
-    def test_parse_link(self):
+    def test_parse_link(self) -> None:
         """Test link parsing."""
         rich_text = {
             "type": "rich_text",
@@ -342,10 +344,10 @@ class TestRichTextParser:
             ],
         }
         ast = parse_rich_text(rich_text)
-        para = ast.children[0]
+        para = cast(Paragraph, ast.children[0])
         assert isinstance(para.children[0], Link)
 
-    def test_parse_elements_array(self):
+    def test_parse_elements_array(self) -> None:
         """Test parsing elements array directly."""
         elements = [
             {
@@ -360,7 +362,7 @@ class TestRichTextParser:
 class TestMrkdwnCodeBlockEdgeCases:
     """Test mrkdwn code block parsing edge cases that cause escaping bugs."""
 
-    def test_code_block_with_closing_backticks_on_content_line(self):
+    def test_code_block_with_closing_backticks_on_content_line(self) -> None:
         """Test code block where closing ``` is on same line as content."""
         mrkdwn = """```
 line 1
@@ -373,7 +375,7 @@ line 2```"""
         assert "line 1" in ast.children[0].content
         assert "line 2" in ast.children[0].content
 
-    def test_code_block_with_very_long_line_ending_with_backticks(self):
+    def test_code_block_with_very_long_line_ending_with_backticks(self) -> None:
         """Test code block with very long line ending with ```."""
         # Simulate the real-world case: long JSON line ending with ```
         long_content = "x" * 1000 + " ending"
@@ -386,7 +388,7 @@ line 2```"""
         assert isinstance(ast.children[0], CodeBlock)
         assert long_content in ast.children[0].content
 
-    def test_code_block_with_special_chars_not_escaped(self):
+    def test_code_block_with_special_chars_not_escaped(self) -> None:
         """Test that special chars in code blocks are NOT escaped."""
         mrkdwn = """```
 version: 3.0.202
@@ -405,7 +407,7 @@ math: (a+b)*c
         assert r"test\.\*regex" not in gfm
         assert r"\(a\+b\)" not in gfm
 
-    def test_code_block_with_backslash_n_not_doubled(self):
+    def test_code_block_with_backslash_n_not_doubled(self) -> None:
         """Test that literal backslash-n sequences are not doubled."""
         mrkdwn = r"""```
 "debug": "Line 1\nLine 2\nLine 3"
@@ -419,7 +421,7 @@ math: (a+b)*c
         # Count \n sequences - should be 2, not 4 (which would mean doubling)
         assert gfm.count(r"\n") == 2
 
-    def test_code_block_json_with_escapes_ending_with_backticks(self):
+    def test_code_block_json_with_escapes_ending_with_backticks(self) -> None:
         """Test realistic JSON code block ending with ``` on content line."""
         mrkdwn = r"""```{
   "message": "Exception occurred",
@@ -442,7 +444,7 @@ math: (a+b)*c
         # Backslash-n should not be doubled (2 \n in input = 2 \n in output)
         assert gfm.count(r"\n") == 2
 
-    def test_multiple_code_blocks_with_mixed_formats(self):
+    def test_multiple_code_blocks_with_mixed_formats(self) -> None:
         """Test multiple code blocks with various closing styles."""
         mrkdwn = """First paragraph
 
@@ -479,7 +481,7 @@ class TestRichTextPreformattedInlineElements:
     channel, date, broadcast, and color.
     """
 
-    def test_preformatted_with_link(self):
+    def test_preformatted_with_link(self) -> None:
         """Test link element in preformatted block."""
         rich_text = {
             "type": "rich_text",
@@ -502,7 +504,7 @@ class TestRichTextPreformattedInlineElements:
         assert "curl -X GET" in code_block.content
         assert "Accept: application/json" in code_block.content
 
-    def test_preformatted_with_user_mention(self):
+    def test_preformatted_with_user_mention(self) -> None:
         """Test user mention in preformatted block."""
         rich_text = {
             "type": "rich_text",
@@ -524,7 +526,7 @@ class TestRichTextPreformattedInlineElements:
         assert "U123ABC" in code_block.content or "@U123ABC" in code_block.content
         assert "Author:" in code_block.content
 
-    def test_preformatted_with_channel_mention(self):
+    def test_preformatted_with_channel_mention(self) -> None:
         """Test channel mention in preformatted block."""
         rich_text = {
             "type": "rich_text",
@@ -546,7 +548,7 @@ class TestRichTextPreformattedInlineElements:
         assert "C123XYZ" in code_block.content or "#C123XYZ" in code_block.content
         assert "Post to" in code_block.content
 
-    def test_preformatted_with_usergroup_mention(self):
+    def test_preformatted_with_usergroup_mention(self) -> None:
         """Test usergroup mention in preformatted block."""
         rich_text = {
             "type": "rich_text",
@@ -568,7 +570,7 @@ class TestRichTextPreformattedInlineElements:
         assert "S123DEF" in code_block.content or "@S123DEF" in code_block.content
         assert "CC:" in code_block.content
 
-    def test_preformatted_with_emoji(self):
+    def test_preformatted_with_emoji(self) -> None:
         """Test emoji in preformatted block."""
         rich_text = {
             "type": "rich_text",
@@ -590,7 +592,7 @@ class TestRichTextPreformattedInlineElements:
         assert "✅" in code_block.content or "white_check_mark" in code_block.content
         assert "Status:" in code_block.content
 
-    def test_preformatted_with_broadcast(self):
+    def test_preformatted_with_broadcast(self) -> None:
         """Test broadcast in preformatted block."""
         rich_text = {
             "type": "rich_text",
@@ -612,7 +614,7 @@ class TestRichTextPreformattedInlineElements:
         assert "here" in code_block.content or "@here" in code_block.content
         assert "Notify:" in code_block.content
 
-    def test_preformatted_with_date(self):
+    def test_preformatted_with_date(self) -> None:
         """Test date timestamp in preformatted block."""
         rich_text = {
             "type": "rich_text",
@@ -638,7 +640,7 @@ class TestRichTextPreformattedInlineElements:
         assert "1704067200" in code_block.content or "Jan 1, 2024" in code_block.content
         assert "Deployed at:" in code_block.content
 
-    def test_preformatted_with_multiple_links(self):
+    def test_preformatted_with_multiple_links(self) -> None:
         """Test multiple links in preformatted block."""
         rich_text = {
             "type": "rich_text",
@@ -660,7 +662,7 @@ class TestRichTextPreformattedInlineElements:
         assert "https://api.example.com" in code_block.content
         assert "https://docs.example.com" in code_block.content
 
-    def test_preformatted_roundtrip_with_link(self):
+    def test_preformatted_roundtrip_with_link(self) -> None:
         """Test that preformatted blocks with links can round-trip through GFM."""
         rich_text = {
             "type": "rich_text",

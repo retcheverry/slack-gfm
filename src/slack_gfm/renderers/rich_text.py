@@ -223,7 +223,7 @@ def _render_usergroup_mention(mention: UsergroupMention) -> dict[str, Any]:
 
 def _render_broadcast(broadcast: Broadcast) -> dict[str, Any]:
     """Render Broadcast node."""
-    return {"type": "broadcast", "range": broadcast.type}
+    return {"type": "broadcast", "range": broadcast.range}
 
 
 def _render_emoji(emoji: Emoji) -> dict[str, Any]:

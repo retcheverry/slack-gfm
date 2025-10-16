@@ -1,6 +1,5 @@
 """Transformer tests."""
 
-
 from slack_gfm.ast import (
     ChannelMention,
     Document,
@@ -25,9 +24,7 @@ class TestIDMapper:
 
     def test_map_channel_id(self):
         """Test channel ID mapping."""
-        doc = Document(
-            children=[Paragraph(children=[ChannelMention(channel_id="C123")])]
-        )
+        doc = Document(children=[Paragraph(children=[ChannelMention(channel_id="C123")])])
         mapper = IDMapper(channel_map={"C123": "general"})
         result = mapper.visit(doc)
         channel = result.children[0].children[0]
@@ -35,9 +32,7 @@ class TestIDMapper:
 
     def test_map_usergroup_id(self):
         """Test usergroup ID mapping."""
-        doc = Document(
-            children=[Paragraph(children=[UsergroupMention(usergroup_id="S123")])]
-        )
+        doc = Document(children=[Paragraph(children=[UsergroupMention(usergroup_id="S123")])])
         mapper = IDMapper(usergroup_map={"S123": "engineers"})
         result = mapper.visit(doc)
         usergroup = result.children[0].children[0]
@@ -58,11 +53,13 @@ class TestCallbackMapper:
 
     def test_user_callback(self):
         """Test user mention callback."""
+        from dataclasses import replace
+
         doc = Document(children=[Paragraph(children=[UserMention(user_id="U123")])])
 
         def user_mapper(node):
-            node.username = "custom_name"
-            return node
+            # Use replace() since nodes are frozen
+            return replace(node, username="custom_name")
 
         mapper = CallbackMapper(user_callback=user_mapper)
         result = mapper.visit(doc)
@@ -71,13 +68,13 @@ class TestCallbackMapper:
 
     def test_channel_callback(self):
         """Test channel mention callback."""
-        doc = Document(
-            children=[Paragraph(children=[ChannelMention(channel_id="C123")])]
-        )
+        from dataclasses import replace
+
+        doc = Document(children=[Paragraph(children=[ChannelMention(channel_id="C123")])])
 
         def channel_mapper(node):
-            node.channel_name = "custom_channel"
-            return node
+            # Use replace() since nodes are frozen
+            return replace(node, channel_name="custom_channel")
 
         mapper = CallbackMapper(channel_callback=channel_mapper)
         result = mapper.visit(doc)
@@ -86,13 +83,13 @@ class TestCallbackMapper:
 
     def test_usergroup_callback(self):
         """Test usergroup mention callback."""
-        doc = Document(
-            children=[Paragraph(children=[UsergroupMention(usergroup_id="S123")])]
-        )
+        from dataclasses import replace
+
+        doc = Document(children=[Paragraph(children=[UsergroupMention(usergroup_id="S123")])])
 
         def usergroup_mapper(node):
-            node.usergroup_name = "custom_group"
-            return node
+            # Use replace() since nodes are frozen
+            return replace(node, usergroup_name="custom_group")
 
         mapper = CallbackMapper(usergroup_callback=usergroup_mapper)
         result = mapper.visit(doc)

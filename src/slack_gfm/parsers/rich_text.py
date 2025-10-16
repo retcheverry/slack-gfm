@@ -83,8 +83,23 @@ def _parse_block_element(element: dict[str, Any]) -> AnyBlock:
 
 def _parse_section(section: dict[str, Any]) -> Paragraph:
     """Parse a rich_text_section into a Paragraph."""
+    from dataclasses import replace
+
     elements = section.get("elements", [])
     children = [_parse_inline_element(elem) for elem in elements]
+
+    # Strip trailing newlines from last text element (block boundary)
+    if children and isinstance(children[-1], Text):
+        content = children[-1].content.rstrip("\n")
+        if content != children[-1].content:
+            children[-1] = replace(children[-1], content=content)
+
+    # Strip leading newlines from first text element (block boundary)
+    if children and isinstance(children[0], Text):
+        content = children[0].content.lstrip("\n")
+        if content != children[0].content:
+            children[0] = replace(children[0], content=content)
+
     return Paragraph(children=children)
 
 
@@ -107,16 +122,84 @@ def _parse_list(list_elem: dict[str, Any]) -> List:
 
 
 def _parse_preformatted(preformatted: dict[str, Any]) -> CodeBlock:
-    """Parse a rich_text_preformatted into a CodeBlock."""
+    """Parse a rich_text_preformatted into a CodeBlock.
+
+    Code blocks contain plain text, so all inline elements (links, mentions,
+    emojis, etc.) are converted to their plain text representation.
+    """
     elements = preformatted.get("elements", [])
-    # Extract text content from elements
+    # Convert all inline elements to plain text
     content_parts = []
     for elem in elements:
-        if elem.get("type") == "text":
-            content_parts.append(elem.get("text", ""))
+        content_parts.append(_element_to_plain_text(elem))
 
     content = "".join(content_parts)
     return CodeBlock(content=content)
+
+
+def _element_to_plain_text(element: dict[str, Any]) -> str:
+    """Convert an inline element to plain text for use in code blocks.
+
+    Args:
+        element: Inline element dict from rich text
+
+    Returns:
+        Plain text representation of the element
+    """
+    elem_type = element.get("type", "")
+
+    if elem_type == "text":
+        return element.get("text", "")
+
+    elif elem_type == "link":
+        # For links in code blocks, use the URL as plain text
+        return element.get("url", "")
+
+    elif elem_type == "user":
+        # User mention as plain text: <@USER_ID>
+        user_id = element.get("user_id", "")
+        return f"<@{user_id}>"
+
+    elif elem_type == "channel":
+        # Channel mention as plain text: <#CHANNEL_ID>
+        channel_id = element.get("channel_id", "")
+        return f"<#{channel_id}>"
+
+    elif elem_type == "usergroup":
+        # Usergroup mention as plain text: <!subteam^USERGROUP_ID>
+        usergroup_id = element.get("usergroup_id", "")
+        return f"<!subteam^{usergroup_id}>"
+
+    elif elem_type == "emoji":
+        # Prefer unicode, fallback to :name:
+        unicode_str = element.get("unicode")
+        if unicode_str:
+            return unicode_str
+        name = element.get("name", "")
+        return f":{name}:" if name else ""
+
+    elif elem_type == "broadcast":
+        # Broadcast as plain text: <!here>, <!channel>, etc.
+        range_type = element.get("range", "here")
+        return f"<!{range_type}>"
+
+    elif elem_type == "date":
+        # Use fallback text if available, otherwise timestamp
+        fallback = element.get("fallback")
+        if fallback:
+            return fallback
+        timestamp = element.get("timestamp", 0)
+        return str(timestamp)
+
+    elif elem_type == "color":
+        # Color element (hex color code)
+        # This is not yet in the AST, but handle it for completeness
+        value = element.get("value", "")
+        return value
+
+    else:
+        # Unknown element type - return empty string
+        return ""
 
 
 def _parse_quote(quote: dict[str, Any]) -> Quote:
@@ -159,12 +242,14 @@ def _parse_text(text_elem: dict[str, Any]) -> AnyInline:
     style = text_elem.get("style", {})
 
     # Build nested style nodes
-    node: AnyInline = Text(content=content)
-
+    # Note: Slack allows combining code with bold/italic/strike
     if style.get("code"):
-        return Code(content=content)
+        node: AnyInline = Code(content=content)
+    else:
+        node = Text(content=content)
 
     # Apply styles in order: bold -> italic -> strikethrough
+    # These can be combined with code formatting
     if style.get("bold"):
         node = Bold(children=[node])
     if style.get("italic"):
@@ -234,4 +319,4 @@ def _parse_date(date_elem: dict[str, Any]) -> DateTimestamp:
 def _parse_broadcast(broadcast_elem: dict[str, Any]) -> Broadcast:
     """Parse a broadcast element."""
     range_type = broadcast_elem.get("range", "here")
-    return Broadcast(type=range_type)
+    return Broadcast(range=range_type)

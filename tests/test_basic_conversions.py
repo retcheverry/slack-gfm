@@ -1,6 +1,5 @@
 """Basic conversion tests for slack-gfm."""
 
-
 from slack_gfm import gfm_to_rich_text, mrkdwn_to_gfm, rich_text_to_gfm
 
 
@@ -29,9 +28,7 @@ class TestRichTextToGFM:
             "elements": [
                 {
                     "type": "rich_text_section",
-                    "elements": [
-                        {"type": "text", "text": "Hello", "style": {"bold": True}}
-                    ],
+                    "elements": [{"type": "text", "text": "Hello", "style": {"bold": True}}],
                 }
             ],
         }

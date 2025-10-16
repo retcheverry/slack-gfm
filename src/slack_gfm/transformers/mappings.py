@@ -4,6 +4,7 @@ Provides convenient mapping transformers for common use cases.
 """
 
 from collections.abc import Callable
+from dataclasses import replace
 from typing import Any
 
 from ..ast import (
@@ -48,21 +49,30 @@ class IDMapper(NodeVisitor):
         self.usergroup_map = usergroup_map or {}
 
     def visit_usermention(self, node: UserMention) -> UserMention:
-        """Map user ID to username."""
+        """Map user ID to username.
+
+        Since nodes are frozen (immutable), we create a new node with the updated username.
+        """
         if node.user_id in self.user_map:
-            node.username = self.user_map[node.user_id]
+            return replace(node, username=self.user_map[node.user_id])
         return node
 
     def visit_channelmention(self, node: ChannelMention) -> ChannelMention:
-        """Map channel ID to channel name."""
+        """Map channel ID to channel name.
+
+        Since nodes are frozen (immutable), we create a new node with the updated channel name.
+        """
         if node.channel_id in self.channel_map:
-            node.channel_name = self.channel_map[node.channel_id]
+            return replace(node, channel_name=self.channel_map[node.channel_id])
         return node
 
     def visit_usergroupmention(self, node: UsergroupMention) -> UsergroupMention:
-        """Map usergroup ID to usergroup name."""
+        """Map usergroup ID to usergroup name.
+
+        Since nodes are frozen (immutable), we create a new node with the updated usergroup name.
+        """
         if node.usergroup_id in self.usergroup_map:
-            node.usergroup_name = self.usergroup_map[node.usergroup_id]
+            return replace(node, usergroup_name=self.usergroup_map[node.usergroup_id])
         return node
 
 
@@ -148,7 +158,5 @@ def apply_id_mappings(
     """
     from ..ast.visitor import transform_ast
 
-    mapper = IDMapper(
-        user_map=user_map, channel_map=channel_map, usergroup_map=usergroup_map
-    )
+    mapper = IDMapper(user_map=user_map, channel_map=channel_map, usergroup_map=usergroup_map)
     return transform_ast(ast_node, mapper)

@@ -137,6 +137,53 @@ Slack Mrkdwn -> Parser -> AST -> Renderer -> GFM
 
 Slack-specific features (user mentions, channel mentions, broadcasts) are preserved using custom `slack://` URLs in GFM, enabling perfect round-trip conversion.
 
+## Format Differences and Limitations
+
+### Rich Text vs Mrkdwn Whitespace Handling
+
+Slack's two formats handle whitespace differently when converting to GFM:
+
+- **Rich Text**: Preserves literal `\n` characters within paragraphs as they appear in the JSON structure
+- **Mrkdwn**: Follows Markdown conventions, converting single newlines to spaces (only double newlines create new paragraphs)
+
+**Example:**
+
+```python
+# Rich text with embedded newline
+rich_text = {
+    "type": "rich_text",
+    "elements": [{
+        "type": "rich_text_section",
+        "elements": [{"type": "text", "text": "Line 1\nLine 2"}]
+    }]
+}
+
+# Mrkdwn equivalent
+mrkdwn = "Line 1\nLine 2"
+
+# Converting to GFM produces slightly different results:
+rich_text_to_gfm(rich_text)  # "Line 1\nLine 2" (preserves newline)
+mrkdwn_to_gfm(mrkdwn)        # "Line 1 Line 2" (converts to space)
+```
+
+Both render identically in most Markdown viewers (single newlines don't create line breaks), but the raw GFM strings differ. This is expected behavior, not a bug.
+
+### Slack Compose Bar Elements
+
+This library has been tested against real Slack messages using all 9 compose bar formatting elements:
+
+1. **Bold** - `*bold*` (mrkdwn) or `{"style": {"bold": true}}` (rich text)
+2. **Italic** - `_italic_` (mrkdwn) or `{"style": {"italic": true}}` (rich text)
+3. **Strikethrough** - `~strike~` (mrkdwn) or `{"style": {"strike": true}}` (rich text)
+4. **Inline Code** - `` `code` `` (mrkdwn) or `{"style": {"code": true}}` (rich text)
+5. **Code Block** - ```` ```code``` ```` (mrkdwn) or `{"type": "rich_text_preformatted"}` (rich text)
+6. **Links** - `<url|text>` (mrkdwn) or `{"type": "link"}` (rich text)
+7. **Quotes** - `&gt; quote` (mrkdwn) or `{"type": "rich_text_quote"}` (rich text)
+8. **Bullet Lists** - `• item` (mrkdwn) or `{"type": "rich_text_list", "style": "bullet"}` (rich text)
+9. **Numbered Lists** - `1. item` (mrkdwn) or `{"type": "rich_text_list", "style": "ordered"}` (rich text)
+
+All elements convert correctly to GFM and support round-trip conversion.
+
 ## Development
 
 ```bash

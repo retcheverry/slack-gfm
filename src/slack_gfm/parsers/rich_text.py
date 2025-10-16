@@ -3,7 +3,7 @@
 Converts Slack Rich Text JSON structure to AST.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from ..ast import (
     AnyBlock,
@@ -149,11 +149,11 @@ def _element_to_plain_text(element: dict[str, Any]) -> str:
     elem_type = element.get("type", "")
 
     if elem_type == "text":
-        return element.get("text", "")
+        return cast(str, element.get("text", ""))
 
     elif elem_type == "link":
         # For links in code blocks, use the URL as plain text
-        return element.get("url", "")
+        return cast(str, element.get("url", ""))
 
     elif elem_type == "user":
         # User mention as plain text: <@USER_ID>
@@ -174,7 +174,7 @@ def _element_to_plain_text(element: dict[str, Any]) -> str:
         # Prefer unicode, fallback to :name:
         unicode_str = element.get("unicode")
         if unicode_str:
-            return unicode_str
+            return cast(str, unicode_str)
         name = element.get("name", "")
         return f":{name}:" if name else ""
 
@@ -187,7 +187,7 @@ def _element_to_plain_text(element: dict[str, Any]) -> str:
         # Use fallback text if available, otherwise timestamp
         fallback = element.get("fallback")
         if fallback:
-            return fallback
+            return cast(str, fallback)
         timestamp = element.get("timestamp", 0)
         return str(timestamp)
 
@@ -195,7 +195,7 @@ def _element_to_plain_text(element: dict[str, Any]) -> str:
         # Color element (hex color code)
         # This is not yet in the AST, but handle it for completeness
         value = element.get("value", "")
-        return value
+        return cast(str, value)
 
     else:
         # Unknown element type - return empty string

@@ -9,12 +9,14 @@ from enum import Enum, auto
 from ..ast import (
     AnyBlock,
     AnyInline,
+    BlockNode,
     Bold,
     Broadcast,
     ChannelMention,
     Code,
     CodeBlock,
     Document,
+    InlineNode,
     Italic,
     Link,
     List,
@@ -366,6 +368,7 @@ def parse_mrkdwn(mrkdwn_text: str) -> Document:
 
 def _parse_tokens_to_ast(tokens: list[Token]) -> Document:
     """Build AST from tokens."""
+
     blocks: list[AnyBlock] = []
     i = 0
 
@@ -379,29 +382,29 @@ def _parse_tokens_to_ast(tokens: list[Token]) -> Document:
 
         # Check for quote
         if tokens[i].type == "quote_marker":
-            block, consumed = _parse_quote_tokens(tokens, i)
-            blocks.append(block)
+            quote_block, consumed = _parse_quote_tokens(tokens, i)
+            blocks.append(quote_block)
             i += consumed
             continue
 
         # Check for bullet list
         if tokens[i].type == "bullet_marker":
-            block, consumed = _parse_list_tokens(tokens, i, ordered=False)
-            blocks.append(block)
+            list_block, consumed = _parse_list_tokens(tokens, i, ordered=False)
+            blocks.append(list_block)
             i += consumed
             continue
 
         # Check for ordered list
         if tokens[i].type == "ordered_marker":
-            block, consumed = _parse_list_tokens(tokens, i, ordered=True)
-            blocks.append(block)
+            list_block, consumed = _parse_list_tokens(tokens, i, ordered=True)
+            blocks.append(list_block)
             i += consumed
             continue
 
         # Check for paragraph (text or formatting)
-        block, consumed = _parse_paragraph_tokens(tokens, i)
-        if block:
-            blocks.append(block)
+        para_block, consumed = _parse_paragraph_tokens(tokens, i)
+        if para_block:
+            blocks.append(para_block)
         i += consumed
 
     return Document(children=blocks)
@@ -530,8 +533,11 @@ def _parse_list_tokens(tokens: list[Token], start: int, ordered: bool) -> tuple[
 
         # Parse item content
         if item_tokens:
+            from typing import cast
+
             inlines = _parse_inline_tokens(item_tokens)
-            list_items.append(ListItem(children=inlines))
+            # Cast to the expected type - AnyInline items are also InlineNode
+            list_items.append(ListItem(children=cast(list[InlineNode | BlockNode], inlines)))
 
     consumed = i - start
     return List(children=list_items, ordered=ordered, start=start_num), consumed

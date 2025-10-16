@@ -14,7 +14,7 @@ from slack_gfm import (
 class TestSlackGFMError:
     """Test the base exception class."""
 
-    def test_basic_exception(self):
+    def test_basic_exception(self) -> None:
         """Test exception with just a message."""
         exc = SlackGFMError("Something went wrong")
 
@@ -22,7 +22,7 @@ class TestSlackGFMError:
         assert exc.context == {}
         assert str(exc) == "Something went wrong"
 
-    def test_exception_with_context(self):
+    def test_exception_with_context(self) -> None:
         """Test exception with context information."""
         context = {"element_type": "unknown", "position": 42}
         exc = SlackGFMError("Parse failed", context=context)
@@ -32,7 +32,7 @@ class TestSlackGFMError:
         assert "element_type='unknown'" in str(exc)
         assert "position=42" in str(exc)
 
-    def test_exception_repr(self):
+    def test_exception_repr(self) -> None:
         """Test exception representation."""
         exc = SlackGFMError("Error", context={"foo": "bar"})
         repr_str = repr(exc)
@@ -41,7 +41,7 @@ class TestSlackGFMError:
         assert "'Error'" in repr_str
         assert "'foo': 'bar'" in repr_str
 
-    def test_exception_is_catchable(self):
+    def test_exception_is_catchable(self) -> None:
         """Test that exception can be caught."""
         with pytest.raises(SlackGFMError) as exc_info:
             raise SlackGFMError("test error")
@@ -52,7 +52,7 @@ class TestSlackGFMError:
 class TestParseError:
     """Test ParseError exception."""
 
-    def test_parse_error_inherits_from_base(self):
+    def test_parse_error_inherits_from_base(self) -> None:
         """Test that ParseError inherits from SlackGFMError."""
         exc = ParseError("Parse failed")
 
@@ -60,7 +60,7 @@ class TestParseError:
         assert isinstance(exc, ParseError)
         assert exc.message == "Parse failed"
 
-    def test_parse_error_with_element_context(self):
+    def test_parse_error_with_element_context(self) -> None:
         """Test ParseError with element context."""
         context = {
             "element": {"type": "rich_text_unknown"},
@@ -73,12 +73,12 @@ class TestParseError:
         assert exc.context["element"]["type"] == "rich_text_unknown"
         assert "rich_text_unknown" in str(exc)
 
-    def test_catch_specific_parse_error(self):
+    def test_catch_specific_parse_error(self) -> None:
         """Test catching specific ParseError."""
         with pytest.raises(ParseError):
             raise ParseError("Invalid syntax")
 
-    def test_catch_as_base_exception(self):
+    def test_catch_as_base_exception(self) -> None:
         """Test catching ParseError as base SlackGFMError."""
         with pytest.raises(SlackGFMError):
             raise ParseError("Invalid syntax")
@@ -87,14 +87,14 @@ class TestParseError:
 class TestRenderError:
     """Test RenderError exception."""
 
-    def test_render_error_inherits_from_base(self):
+    def test_render_error_inherits_from_base(self) -> None:
         """Test that RenderError inherits from SlackGFMError."""
         exc = RenderError("Render failed")
 
         assert isinstance(exc, SlackGFMError)
         assert isinstance(exc, RenderError)
 
-    def test_render_error_with_node_context(self):
+    def test_render_error_with_node_context(self) -> None:
         """Test RenderError with AST node context."""
         context = {
             "node_type": "Link",
@@ -106,7 +106,7 @@ class TestRenderError:
         assert "Link" in str(exc)
         assert "url" in str(exc)
 
-    def test_catch_specific_render_error(self):
+    def test_catch_specific_render_error(self) -> None:
         """Test catching specific RenderError."""
         with pytest.raises(RenderError):
             raise RenderError("Cannot render")
@@ -115,14 +115,14 @@ class TestRenderError:
 class TestValidationError:
     """Test ValidationError exception."""
 
-    def test_validation_error_inherits_from_base(self):
+    def test_validation_error_inherits_from_base(self) -> None:
         """Test that ValidationError inherits from SlackGFMError."""
         exc = ValidationError("Validation failed")
 
         assert isinstance(exc, SlackGFMError)
         assert isinstance(exc, ValidationError)
 
-    def test_validation_error_with_field_context(self):
+    def test_validation_error_with_field_context(self) -> None:
         """Test ValidationError with field validation context."""
         context = {
             "field": "elements",
@@ -135,7 +135,7 @@ class TestValidationError:
         assert "elements" in str(exc)
         assert "list" in str(exc)
 
-    def test_catch_specific_validation_error(self):
+    def test_catch_specific_validation_error(self) -> None:
         """Test catching specific ValidationError."""
         with pytest.raises(ValidationError):
             raise ValidationError("Invalid data")
@@ -144,14 +144,14 @@ class TestValidationError:
 class TestTransformError:
     """Test TransformError exception."""
 
-    def test_transform_error_inherits_from_base(self):
+    def test_transform_error_inherits_from_base(self) -> None:
         """Test that TransformError inherits from SlackGFMError."""
         exc = TransformError("Transform failed")
 
         assert isinstance(exc, SlackGFMError)
         assert isinstance(exc, TransformError)
 
-    def test_transform_error_with_visitor_context(self):
+    def test_transform_error_with_visitor_context(self) -> None:
         """Test TransformError with visitor context."""
         context = {
             "visitor": "MyCustomVisitor",
@@ -165,7 +165,7 @@ class TestTransformError:
         assert "Text" in str(exc)
         assert "oops" in str(exc)
 
-    def test_catch_specific_transform_error(self):
+    def test_catch_specific_transform_error(self) -> None:
         """Test catching specific TransformError."""
         with pytest.raises(TransformError):
             raise TransformError("Transformation failed")
@@ -174,7 +174,7 @@ class TestTransformError:
 class TestExceptionHierarchy:
     """Test exception hierarchy and catching."""
 
-    def test_catch_all_library_exceptions(self):
+    def test_catch_all_library_exceptions(self) -> None:
         """Test catching all library exceptions with base class."""
         exceptions = [
             ParseError("parse"),
@@ -187,16 +187,16 @@ class TestExceptionHierarchy:
             with pytest.raises(SlackGFMError):
                 raise exc
 
-    def test_exception_types_are_distinct(self):
+    def test_exception_types_are_distinct(self) -> None:
         """Test that exception types are distinguishable."""
         parse_exc = ParseError("parse")
         render_exc = RenderError("render")
 
-        assert type(parse_exc) is not type(render_exc)
+        assert type(parse_exc) is not type(render_exc)  # type: ignore[comparison-overlap]
         assert isinstance(parse_exc, ParseError)
         assert not isinstance(parse_exc, RenderError)
 
-    def test_selective_exception_catching(self):
+    def test_selective_exception_catching(self) -> None:
         """Test catching specific exception types."""
 
         def might_fail(error_type: str) -> None:
@@ -216,20 +216,20 @@ class TestExceptionHierarchy:
 class TestExceptionUsagePatterns:
     """Test realistic exception usage patterns."""
 
-    def test_exception_with_empty_context(self):
+    def test_exception_with_empty_context(self) -> None:
         """Test that empty context dict works correctly."""
         exc = SlackGFMError("error", context={})
 
         assert exc.context == {}
         assert str(exc) == "error"
 
-    def test_exception_with_none_context(self):
+    def test_exception_with_none_context(self) -> None:
         """Test that None context becomes empty dict."""
         exc = SlackGFMError("error", context=None)
 
         assert exc.context == {}
 
-    def test_exception_with_complex_context(self):
+    def test_exception_with_complex_context(self) -> None:
         """Test exception with complex nested context."""
         context = {
             "input": {"type": "rich_text", "elements": [...]},
@@ -242,7 +242,7 @@ class TestExceptionUsagePatterns:
         assert "input" in exc.context
         assert exc.context["error_location"]["line"] == 5
 
-    def test_re_raising_with_additional_context(self):
+    def test_re_raising_with_additional_context(self) -> None:
         """Test re-raising exception with additional context."""
         try:
             raise ParseError("Inner error", context={"level": "inner"})

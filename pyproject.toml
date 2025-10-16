@@ -1,6 +1,6 @@
 [project]
 name = "slack-gfm"
-version = "0.2.0"
+version = "0.2.1"
 description = "Convert between Slack message formats (Mrkdwn, Rich Text) and GitHub Flavored Markdown with AST manipulation"
 readme = "README.md"
 authors = [

@@ -58,11 +58,13 @@ class NodeVisitor:
         """
         if hasattr(node, "children") and node.children:
             from dataclasses import replace
+            from typing import Any, cast
 
             new_children = [self.visit(child) for child in node.children]
             # Only create a new node if children actually changed
             if new_children != list(node.children):
-                return replace(node, children=new_children)
+                # We've checked hasattr, so this is safe at runtime
+                return cast(AnyNode, replace(cast(Any, node), children=new_children))
         return node
 
     # Visitor methods for each node type
@@ -150,14 +152,28 @@ class NodeVisitor:
 
     def visit_table(self, node: Table) -> Table:
         """Visit a Table node."""
+        from dataclasses import replace
+        from typing import cast
+
+        from .nodes import InlineNode
+
         # Tables have nested structure - visit cells
+        new_header = node.header
+        new_rows = node.rows
+
         if node.header:
-            node.header = [[self.visit(cell) for cell in row] for row in node.header]  # type: ignore
+            new_header = [
+                [cast(InlineNode, self.visit(cell)) for cell in row] for row in node.header
+            ]
         if node.rows:
-            node.rows = [
-                [[self.visit(cell) for cell in row_cells] for row_cells in row]  # type: ignore
+            new_rows = [
+                [[cast(InlineNode, self.visit(cell)) for cell in row_cells] for row_cells in row]
                 for row in node.rows
             ]
+
+        # Only create new node if something changed
+        if new_header != node.header or new_rows != node.rows:
+            return replace(node, header=new_header, rows=new_rows)
         return node
 
 

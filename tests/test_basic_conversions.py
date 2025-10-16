@@ -6,7 +6,7 @@ from slack_gfm import gfm_to_rich_text, mrkdwn_to_gfm, rich_text_to_gfm
 class TestRichTextToGFM:
     """Test Rich Text to GFM conversion."""
 
-    def test_simple_text(self):
+    def test_simple_text(self) -> None:
         """Test simple text conversion."""
         rich_text = {
             "type": "rich_text",
@@ -21,7 +21,7 @@ class TestRichTextToGFM:
         result = rich_text_to_gfm(rich_text)
         assert result == "Hello world"
 
-    def test_bold_text(self):
+    def test_bold_text(self) -> None:
         """Test bold text conversion."""
         rich_text = {
             "type": "rich_text",
@@ -36,7 +36,7 @@ class TestRichTextToGFM:
         result = rich_text_to_gfm(rich_text)
         assert result == "**Hello**"
 
-    def test_user_mention(self):
+    def test_user_mention(self) -> None:
         """Test user mention conversion."""
         rich_text = {
             "type": "rich_text",
@@ -52,7 +52,7 @@ class TestRichTextToGFM:
         assert "slack://user" in result
         assert "id=U123ABC" in result
 
-    def test_user_mention_with_mapping(self):
+    def test_user_mention_with_mapping(self) -> None:
         """Test user mention with ID mapping."""
         rich_text = {
             "type": "rich_text",
@@ -68,7 +68,7 @@ class TestRichTextToGFM:
         assert "@john" in result
         assert "name=john" in result
 
-    def test_code_block(self):
+    def test_code_block(self) -> None:
         """Test code block conversion."""
         rich_text = {
             "type": "rich_text",
@@ -88,7 +88,7 @@ class TestRichTextToGFM:
 class TestGFMToRichText:
     """Test GFM to Rich Text conversion."""
 
-    def test_simple_text(self):
+    def test_simple_text(self) -> None:
         """Test simple text conversion."""
         gfm = "Hello world"
         result = gfm_to_rich_text(gfm)
@@ -99,7 +99,7 @@ class TestGFMToRichText:
         first_elem = result["elements"][0]
         assert first_elem["type"] == "rich_text_section"
 
-    def test_bold_text(self):
+    def test_bold_text(self) -> None:
         """Test bold text conversion."""
         gfm = "**Hello**"
         result = gfm_to_rich_text(gfm)
@@ -110,7 +110,7 @@ class TestGFMToRichText:
             elem.get("style", {}).get("bold") for elem in elements if elem.get("type") == "text"
         )
 
-    def test_slack_url_user_mention(self):
+    def test_slack_url_user_mention(self) -> None:
         """Test slack:// URL conversion back to user mention."""
         gfm = "[@john](slack://user?id=U123ABC&name=john)"
         result = gfm_to_rich_text(gfm)
@@ -123,25 +123,25 @@ class TestGFMToRichText:
 class TestMrkdwnToGFM:
     """Test mrkdwn to GFM conversion."""
 
-    def test_simple_text(self):
+    def test_simple_text(self) -> None:
         """Test simple text conversion."""
         mrkdwn = "Hello world"
         result = mrkdwn_to_gfm(mrkdwn)
         assert "Hello world" in result
 
-    def test_bold_syntax(self):
+    def test_bold_syntax(self) -> None:
         """Test mrkdwn bold (*) to GFM bold (**)."""
         mrkdwn = "*Hello*"
         result = mrkdwn_to_gfm(mrkdwn)
         assert "**Hello**" in result
 
-    def test_italic_syntax(self):
+    def test_italic_syntax(self) -> None:
         """Test mrkdwn italic (_) to GFM italic (*)."""
         mrkdwn = "_Hello_"
         result = mrkdwn_to_gfm(mrkdwn)
         assert "*Hello*" in result
 
-    def test_user_mention(self):
+    def test_user_mention(self) -> None:
         """Test mrkdwn user mention conversion."""
         mrkdwn = "<@U123ABC|john>"
         result = mrkdwn_to_gfm(mrkdwn)
@@ -149,7 +149,7 @@ class TestMrkdwnToGFM:
         assert "id=U123ABC" in result
         assert "@john" in result
 
-    def test_link(self):
+    def test_link(self) -> None:
         """Test mrkdwn link conversion."""
         mrkdwn = "<https://example.com|Example>"
         result = mrkdwn_to_gfm(mrkdwn)
@@ -159,7 +159,7 @@ class TestMrkdwnToGFM:
 class TestRoundTrip:
     """Test round-trip conversions."""
 
-    def test_rich_text_to_gfm_to_rich_text(self):
+    def test_rich_text_to_gfm_to_rich_text(self) -> None:
         """Test Rich Text → GFM → Rich Text preserves data."""
         original = {
             "type": "rich_text",

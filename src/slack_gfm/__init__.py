@@ -11,11 +11,12 @@ and ID mappings.
 from typing import Any
 
 from .ast.visitor import NodeVisitor, transform_ast
+from .exceptions import ParseError, RenderError, SlackGFMError, TransformError, ValidationError
 from .parsers import parse_gfm, parse_mrkdwn, parse_rich_text
 from .renderers import render_gfm, render_rich_text
 from .transformers import CallbackMapper, IDMapper, apply_id_mappings
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     # Version
@@ -37,6 +38,12 @@ __all__ = [
     "IDMapper",
     "CallbackMapper",
     "NodeVisitor",
+    # Exceptions
+    "SlackGFMError",
+    "ParseError",
+    "RenderError",
+    "ValidationError",
+    "TransformError",
 ]
 
 

@@ -1,6 +1,5 @@
 """Comprehensive renderer tests."""
 
-
 from slack_gfm.ast import (
     Bold,
     Broadcast,
@@ -35,26 +34,20 @@ class TestGFMRenderer:
 
     def test_render_bold(self):
         """Test bold rendering."""
-        doc = Document(
-            children=[Paragraph(children=[Bold(children=[Text(content="bold")])])]
-        )
+        doc = Document(children=[Paragraph(children=[Bold(children=[Text(content="bold")])])])
         result = render_gfm(doc)
         assert "**bold**" in result
 
     def test_render_italic(self):
         """Test italic rendering."""
-        doc = Document(
-            children=[Paragraph(children=[Italic(children=[Text(content="italic")])])]
-        )
+        doc = Document(children=[Paragraph(children=[Italic(children=[Text(content="italic")])])])
         result = render_gfm(doc)
         assert "*italic*" in result
 
     def test_render_strikethrough(self):
         """Test strikethrough rendering."""
         doc = Document(
-            children=[
-                Paragraph(children=[Strikethrough(children=[Text(content="strike")])])
-            ]
+            children=[Paragraph(children=[Strikethrough(children=[Text(content="strike")])])]
         )
         result = render_gfm(doc)
         assert "~~strike~~" in result
@@ -79,10 +72,13 @@ class TestGFMRenderer:
         assert "print('hello')" in result
 
     def test_render_code_block_no_language(self):
-        """Test code block without language."""
+        """Test code block without language.
+
+        Code blocks with no newlines render as inline format for round-trip consistency.
+        """
         doc = Document(children=[CodeBlock(content="code")])
         result = render_gfm(doc)
-        assert "```\ncode\n```" in result
+        assert "```code```" in result
 
     def test_render_list(self):
         """Test list rendering."""
@@ -121,9 +117,7 @@ class TestGFMRenderer:
     def test_render_quote(self):
         """Test quote rendering."""
         doc = Document(
-            children=[
-                Quote(children=[Paragraph(children=[Text(content="quoted text")])])
-            ]
+            children=[Quote(children=[Paragraph(children=[Text(content="quoted text")])])]
         )
         result = render_gfm(doc)
         assert "> quoted text" in result
@@ -133,9 +127,7 @@ class TestGFMRenderer:
         doc = Document(
             children=[
                 Paragraph(
-                    children=[
-                        Link(url="https://example.com", children=[Text(content="Link")])
-                    ]
+                    children=[Link(url="https://example.com", children=[Text(content="Link")])]
                 )
             ]
         )
@@ -145,9 +137,7 @@ class TestGFMRenderer:
     def test_render_user_mention(self):
         """Test user mention rendering."""
         doc = Document(
-            children=[
-                Paragraph(children=[UserMention(user_id="U123", username="john")])
-            ]
+            children=[Paragraph(children=[UserMention(user_id="U123", username="john")])]
         )
         result = render_gfm(doc)
         assert "[@john](slack://user?id=U123&name=john)" in result
@@ -163,9 +153,7 @@ class TestGFMRenderer:
         """Test channel mention rendering."""
         doc = Document(
             children=[
-                Paragraph(
-                    children=[ChannelMention(channel_id="C123", channel_name="general")]
-                )
+                Paragraph(children=[ChannelMention(channel_id="C123", channel_name="general")])
             ]
         )
         result = render_gfm(doc)
@@ -176,9 +164,7 @@ class TestGFMRenderer:
         doc = Document(
             children=[
                 Paragraph(
-                    children=[
-                        UsergroupMention(usergroup_id="S123", usergroup_name="engineers")
-                    ]
+                    children=[UsergroupMention(usergroup_id="S123", usergroup_name="engineers")]
                 )
             ]
         )
@@ -187,7 +173,7 @@ class TestGFMRenderer:
 
     def test_render_broadcast(self):
         """Test broadcast rendering."""
-        doc = Document(children=[Paragraph(children=[Broadcast(type="here")])])
+        doc = Document(children=[Paragraph(children=[Broadcast(range="here")])])
         result = render_gfm(doc)
         assert "[@here](slack://broadcast?type=here)" in result
 
@@ -212,18 +198,14 @@ class TestRichTextRenderer:
 
     def test_render_bold(self):
         """Test bold rendering."""
-        doc = Document(
-            children=[Paragraph(children=[Bold(children=[Text(content="bold")])])]
-        )
+        doc = Document(children=[Paragraph(children=[Bold(children=[Text(content="bold")])])])
         result = render_rich_text(doc)
         elem = result["elements"][0]["elements"][0]
         assert elem["style"]["bold"] is True
 
     def test_render_italic(self):
         """Test italic rendering."""
-        doc = Document(
-            children=[Paragraph(children=[Italic(children=[Text(content="italic")])])]
-        )
+        doc = Document(children=[Paragraph(children=[Italic(children=[Text(content="italic")])])])
         result = render_rich_text(doc)
         elem = result["elements"][0]["elements"][0]
         assert elem["style"]["italic"] is True
@@ -231,9 +213,7 @@ class TestRichTextRenderer:
     def test_render_strikethrough(self):
         """Test strikethrough rendering."""
         doc = Document(
-            children=[
-                Paragraph(children=[Strikethrough(children=[Text(content="strike")])])
-            ]
+            children=[Paragraph(children=[Strikethrough(children=[Text(content="strike")])])]
         )
         result = render_rich_text(doc)
         elem = result["elements"][0]["elements"][0]
@@ -286,11 +266,7 @@ class TestRichTextRenderer:
 
     def test_render_quote(self):
         """Test quote rendering."""
-        doc = Document(
-            children=[
-                Quote(children=[Paragraph(children=[Text(content="quoted")])])
-            ]
-        )
+        doc = Document(children=[Quote(children=[Paragraph(children=[Text(content="quoted")])])])
         result = render_rich_text(doc)
         quote = result["elements"][0]
         assert quote["type"] == "rich_text_quote"
@@ -305,9 +281,7 @@ class TestRichTextRenderer:
 
     def test_render_channel_mention(self):
         """Test channel mention rendering."""
-        doc = Document(
-            children=[Paragraph(children=[ChannelMention(channel_id="C123")])]
-        )
+        doc = Document(children=[Paragraph(children=[ChannelMention(channel_id="C123")])])
         result = render_rich_text(doc)
         elem = result["elements"][0]["elements"][0]
         assert elem["type"] == "channel"
@@ -315,7 +289,7 @@ class TestRichTextRenderer:
 
     def test_render_broadcast(self):
         """Test broadcast rendering."""
-        doc = Document(children=[Paragraph(children=[Broadcast(type="here")])])
+        doc = Document(children=[Paragraph(children=[Broadcast(range="here")])])
         result = render_rich_text(doc)
         elem = result["elements"][0]["elements"][0]
         assert elem["type"] == "broadcast"
@@ -326,9 +300,7 @@ class TestRichTextRenderer:
         doc = Document(
             children=[
                 Paragraph(
-                    children=[
-                        Link(url="https://example.com", children=[Text(content="Link")])
-                    ]
+                    children=[Link(url="https://example.com", children=[Text(content="Link")])]
                 )
             ]
         )

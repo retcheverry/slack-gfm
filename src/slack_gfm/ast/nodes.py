@@ -9,21 +9,24 @@ from dataclasses import dataclass, field
 # Base classes
 
 
-@dataclass
+@dataclass(frozen=True)
 class Node:
-    """Base class for all AST nodes."""
+    """Base class for all AST nodes.
+
+    All nodes are immutable (frozen) for safety in concurrent environments.
+    """
 
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class InlineNode(Node):
     """Base class for inline-level nodes (can appear within a paragraph)."""
 
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class BlockNode(Node):
     """Base class for block-level nodes (standalone blocks like paragraphs, lists, quotes)."""
 
@@ -33,7 +36,7 @@ class BlockNode(Node):
 # Document structure
 
 
-@dataclass
+@dataclass(frozen=True)
 class Document(Node):
     """Root node containing all content blocks."""
 
@@ -43,50 +46,57 @@ class Document(Node):
 # Inline nodes
 
 
-@dataclass
+@dataclass(frozen=True)
 class Text(InlineNode):
     """Plain text node."""
 
     content: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class Bold(InlineNode):
     """Bold text."""
 
     children: list[InlineNode] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Italic(InlineNode):
     """Italic text."""
 
     children: list[InlineNode] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Strikethrough(InlineNode):
     """Strikethrough text."""
 
     children: list[InlineNode] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Code(InlineNode):
     """Inline code."""
 
     content: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class Link(InlineNode):
-    """Hyperlink with optional text content."""
+    """Hyperlink with optional text content.
+
+    Attributes:
+        url: The URL target
+        text: Optional display text (if None, URL is displayed)
+        children: Optional inline elements (alternative to text)
+    """
 
     url: str
-    children: list[InlineNode] = field(default_factory=list)  # Link text
+    text: str | None = None
+    children: list[InlineNode] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class UserMention(InlineNode):
     """Slack user mention.
 
@@ -99,7 +109,7 @@ class UserMention(InlineNode):
     username: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ChannelMention(InlineNode):
     """Slack channel mention.
 
@@ -112,7 +122,7 @@ class ChannelMention(InlineNode):
     channel_name: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class UsergroupMention(InlineNode):
     """Slack usergroup mention.
 
@@ -125,18 +135,18 @@ class UsergroupMention(InlineNode):
     usergroup_name: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class Broadcast(InlineNode):
     """Slack broadcast notification.
 
     Attributes:
-        type: Type of broadcast ("here", "channel", "everyone")
+        range: Type of broadcast ("here", "channel", "everyone")
     """
 
-    type: str  # "here", "channel", "everyone"
+    range: str  # "here", "channel", "everyone"
 
 
-@dataclass
+@dataclass(frozen=True)
 class Emoji(InlineNode):
     """Emoji.
 
@@ -149,7 +159,7 @@ class Emoji(InlineNode):
     unicode: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class DateTimestamp(InlineNode):
     """Slack date/time formatting.
 
@@ -167,14 +177,14 @@ class DateTimestamp(InlineNode):
 # Block nodes
 
 
-@dataclass
+@dataclass(frozen=True)
 class Paragraph(BlockNode):
     """Paragraph containing inline content."""
 
     children: list[InlineNode] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Heading(BlockNode):
     """Heading with level (1-6)."""
 
@@ -182,7 +192,7 @@ class Heading(BlockNode):
     children: list[InlineNode] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class CodeBlock(BlockNode):
     """Code block with optional language."""
 
@@ -190,14 +200,14 @@ class CodeBlock(BlockNode):
     language: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class Quote(BlockNode):
     """Block quote."""
 
     children: list[BlockNode] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class List(BlockNode):
     """List (ordered or unordered).
 
@@ -212,7 +222,7 @@ class List(BlockNode):
     start: int = 1
 
 
-@dataclass
+@dataclass(frozen=True)
 class ListItem(Node):
     """List item.
 
@@ -222,14 +232,14 @@ class ListItem(Node):
     children: list[InlineNode | BlockNode] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class HorizontalRule(BlockNode):
     """Horizontal rule / divider."""
 
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class Table(BlockNode):
     """Table (GFM extension).
 

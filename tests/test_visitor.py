@@ -1,6 +1,5 @@
 """AST visitor tests."""
 
-
 from slack_gfm.ast import (
     Bold,
     Document,
@@ -29,11 +28,12 @@ class TestNodeVisitor:
 
     def test_visit_specific_node(self):
         """Test visiting specific node type."""
+        from dataclasses import replace
 
         class TextUpperVisitor(NodeVisitor):
             def visit_text(self, node):
-                node.content = node.content.upper()
-                return node
+                # Use replace() since nodes are frozen
+                return replace(node, content=node.content.upper())
 
         doc = Document(children=[Paragraph(children=[Text(content="hello")])])
         visitor = TextUpperVisitor()
@@ -43,21 +43,20 @@ class TestNodeVisitor:
 
     def test_visit_nested_nodes(self):
         """Test visiting nested nodes."""
+        from dataclasses import replace
 
         class BoldTextVisitor(NodeVisitor):
             def visit_bold(self, node):
-                # Process children
-                node.children = [self.visit(child) for child in node.children]
-                return node
+                # Process children - use generic_visit which handles immutability
+                return self.generic_visit(node)
 
             def visit_text(self, node):
                 if hasattr(node, "content"):
-                    node.content = node.content + "!"
+                    # Use replace() since nodes are frozen
+                    return replace(node, content=node.content + "!")
                 return node
 
-        doc = Document(
-            children=[Paragraph(children=[Bold(children=[Text(content="bold")])])]
-        )
+        doc = Document(children=[Paragraph(children=[Bold(children=[Text(content="bold")])])])
         visitor = BoldTextVisitor()
         result = visitor.visit(doc)
         text = result.children[0].children[0].children[0]
@@ -65,11 +64,12 @@ class TestNodeVisitor:
 
     def test_transform_ast_function(self):
         """Test transform_ast helper function."""
+        from dataclasses import replace
 
         class AppendVisitor(NodeVisitor):
             def visit_text(self, node):
-                node.content = node.content + " transformed"
-                return node
+                # Use replace() since nodes are frozen
+                return replace(node, content=node.content + " transformed")
 
         doc = Document(children=[Paragraph(children=[Text(content="original")])])
         result = transform_ast(doc, AppendVisitor())

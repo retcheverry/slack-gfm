@@ -116,6 +116,8 @@ def _parse_paragraph(tokens: list[Token], start_idx: int) -> tuple[Paragraph, in
 def _parse_code_block(token: Token) -> CodeBlock:
     """Parse code block token."""
     content = token.content
+    # Strip trailing newlines to match Slack's behavior
+    content = content.rstrip("\n")
     language = token.info if token.info else None
     return CodeBlock(content=content, language=language)
 
@@ -300,7 +302,7 @@ def _parse_slack_url(url: str, children: list[AnyInline]) -> AnyInline | None:
         return UsergroupMention(usergroup_id=usergroup_id, usergroup_name=usergroup_name)
     elif path == "broadcast":
         broadcast_type = params.get("type", ["here"])[0]
-        return Broadcast(type=broadcast_type)
+        return Broadcast(range=broadcast_type)
     elif path == "date":
         timestamp = int(params.get("ts", ["0"])[0])
         date_format = params.get("format", [None])[0]

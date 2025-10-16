@@ -1,6 +1,5 @@
 """Edge case tests to improve coverage."""
 
-
 from slack_gfm import gfm_to_rich_text, mrkdwn_to_gfm, rich_text_to_gfm
 from slack_gfm.ast import (
     Document,
@@ -128,9 +127,7 @@ class TestRendererEdgeCases:
     def test_gfm_heading_levels(self):
         """Test different heading levels."""
         for level in range(1, 7):
-            doc = Document(
-                children=[Heading(level=level, children=[Text(content="Title")])]
-            )
+            doc = Document(children=[Heading(level=level, children=[Text(content="Title")])])
             result = render_gfm(doc)
             assert "#" * level in result
 

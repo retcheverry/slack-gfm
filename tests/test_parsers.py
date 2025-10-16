@@ -1,6 +1,5 @@
 """Comprehensive parser tests."""
 
-
 from slack_gfm.ast import (
     Bold,
     Broadcast,
@@ -19,6 +18,7 @@ from slack_gfm.ast import (
     UserMention,
 )
 from slack_gfm.parsers import parse_gfm, parse_mrkdwn, parse_rich_text
+from slack_gfm.renderers import render_gfm
 
 
 class TestGFMParser:
@@ -83,7 +83,7 @@ class TestGFMParser:
         ast = parse_gfm("[@here](slack://broadcast?type=here)")
         para = ast.children[0]
         assert isinstance(para.children[0], Broadcast)
-        assert para.children[0].type == "here"
+        assert para.children[0].range == "here"
 
     def test_parse_slack_usergroup_url(self):
         """Test parsing slack:// usergroup URL."""
@@ -164,19 +164,25 @@ class TestMrkdwnParser:
         ast = parse_mrkdwn("<!here>")
         para = ast.children[0]
         assert isinstance(para.children[0], Broadcast)
-        assert para.children[0].type == "here"
+        assert para.children[0].range == "here"
 
     def test_parse_blockquote(self):
-        """Test blockquote parsing."""
-        ast = parse_mrkdwn("> quote text")
+        """Test blockquote parsing.
+
+        Note: Slack mrkdwn uses &gt; (HTML entity) for blockquotes, not plain >.
+        """
+        ast = parse_mrkdwn("&gt; quote text")
         assert isinstance(ast.children[0], Quote)
 
     def test_parse_list(self):
-        """Test list parsing."""
-        # Note: mrkdwn doesn't auto-detect bullet lists like markdown
-        # This is parsed as plain text
+        """Test list parsing.
+
+        Slack mrkdwn DOES recognize bullet lists using • character.
+        """
         ast = parse_mrkdwn("• Item 1\n• Item 2")
-        assert isinstance(ast.children[0], Paragraph)
+        assert isinstance(ast.children[0], List)
+        assert not ast.children[0].ordered
+        assert len(ast.children[0].children) == 2
 
 
 class TestRichTextParser:
@@ -349,3 +355,329 @@ class TestRichTextParser:
         ]
         ast = parse_rich_text(elements)
         assert len(ast.children) == 1
+
+
+class TestMrkdwnCodeBlockEdgeCases:
+    """Test mrkdwn code block parsing edge cases that cause escaping bugs."""
+
+    def test_code_block_with_closing_backticks_on_content_line(self):
+        """Test code block where closing ``` is on same line as content."""
+        mrkdwn = """```
+line 1
+line 2```"""
+        ast = parse_mrkdwn(mrkdwn)
+
+        # Should parse as a single CodeBlock, not mixed blocks
+        assert len(ast.children) == 1
+        assert isinstance(ast.children[0], CodeBlock)
+        assert "line 1" in ast.children[0].content
+        assert "line 2" in ast.children[0].content
+
+    def test_code_block_with_very_long_line_ending_with_backticks(self):
+        """Test code block with very long line ending with ```."""
+        # Simulate the real-world case: long JSON line ending with ```
+        long_content = "x" * 1000 + " ending"
+        mrkdwn = f"```\n{long_content}```"
+
+        ast = parse_mrkdwn(mrkdwn)
+
+        # Should be a single CodeBlock
+        assert len(ast.children) == 1
+        assert isinstance(ast.children[0], CodeBlock)
+        assert long_content in ast.children[0].content
+
+    def test_code_block_with_special_chars_not_escaped(self):
+        """Test that special chars in code blocks are NOT escaped."""
+        mrkdwn = """```
+version: 3.0.202
+host: 10.64.64.98
+path: /api/v1
+pattern: test.*regex
+math: (a+b)*c
+```"""
+        ast = parse_mrkdwn(mrkdwn)
+        gfm = render_gfm(ast)
+
+        # Content should NOT be escaped
+        assert "3.0.202" in gfm
+        assert r"3\.0\.202" not in gfm
+        assert "10.64.64.98" in gfm
+        assert r"test\.\*regex" not in gfm
+        assert r"\(a\+b\)" not in gfm
+
+    def test_code_block_with_backslash_n_not_doubled(self):
+        """Test that literal backslash-n sequences are not doubled."""
+        mrkdwn = r"""```
+"debug": "Line 1\nLine 2\nLine 3"
+```"""
+        ast = parse_mrkdwn(mrkdwn)
+        gfm = render_gfm(ast)
+
+        # Backslashes should NOT be doubled (2 \n in input = 2 \n in output)
+        backslash_count = gfm.count("\\")
+        assert backslash_count == 2, f"Expected 2 backslashes, got {backslash_count}"
+        # Count \n sequences - should be 2, not 4 (which would mean doubling)
+        assert gfm.count(r"\n") == 2
+
+    def test_code_block_json_with_escapes_ending_with_backticks(self):
+        """Test realistic JSON code block ending with ``` on content line."""
+        mrkdwn = r"""```{
+  "message": "Exception occurred",
+  "debug": "Service Name: test\nVersion: 3.0.202\nHost: 10.64.64.98"
+}```"""
+        ast = parse_mrkdwn(mrkdwn)
+
+        # Should be a single CodeBlock
+        assert len(ast.children) == 1, f"Expected 1 block, got {len(ast.children)}"
+        assert isinstance(ast.children[0], CodeBlock), (
+            f"Expected CodeBlock, got {type(ast.children[0])}"
+        )
+
+        # Render and check no escaping
+        gfm = render_gfm(ast)
+        assert "3.0.202" in gfm
+        assert r"3\.0\.202" not in gfm
+        assert r"10\.64\.64\.98" not in gfm
+
+        # Backslash-n should not be doubled (2 \n in input = 2 \n in output)
+        assert gfm.count(r"\n") == 2
+
+    def test_multiple_code_blocks_with_mixed_formats(self):
+        """Test multiple code blocks with various closing styles."""
+        mrkdwn = """First paragraph
+
+```
+code block 1
+```
+
+```{
+json block
+}```
+
+Last paragraph"""
+
+        ast = parse_mrkdwn(mrkdwn)
+        gfm = render_gfm(ast)
+
+        # Should have parsed correctly: 2 paragraphs and 2 code blocks
+        code_blocks = [c for c in ast.children if isinstance(c, CodeBlock)]
+        paragraphs = [c for c in ast.children if isinstance(c, Paragraph)]
+
+        assert len(code_blocks) == 2, f"Expected 2 code blocks, got {len(code_blocks)}"
+        assert len(paragraphs) == 2, f"Expected 2 paragraphs, got {len(paragraphs)}"
+
+        # No escaping in output
+        assert r"\{" not in gfm
+        assert r"\}" not in gfm
+
+
+class TestRichTextPreformattedInlineElements:
+    """Test all inline element types inside rich_text_preformatted blocks.
+
+    According to Slack documentation, the following inline elements can appear
+    in rich_text_preformatted blocks: text, link, emoji, user, usergroup,
+    channel, date, broadcast, and color.
+    """
+
+    def test_preformatted_with_link(self):
+        """Test link element in preformatted block."""
+        rich_text = {
+            "type": "rich_text",
+            "elements": [
+                {
+                    "type": "rich_text_preformatted",
+                    "elements": [
+                        {"type": "text", "text": "curl -X GET "},
+                        {"type": "link", "url": "https://example.com/api"},
+                        {"type": "text", "text": " -H 'Accept: application/json'"},
+                    ],
+                }
+            ],
+        }
+        ast = parse_rich_text(rich_text)
+        code_block = ast.children[0]
+        assert isinstance(code_block, CodeBlock)
+        # The content should include the URL as plain text
+        assert "https://example.com/api" in code_block.content
+        assert "curl -X GET" in code_block.content
+        assert "Accept: application/json" in code_block.content
+
+    def test_preformatted_with_user_mention(self):
+        """Test user mention in preformatted block."""
+        rich_text = {
+            "type": "rich_text",
+            "elements": [
+                {
+                    "type": "rich_text_preformatted",
+                    "elements": [
+                        {"type": "text", "text": "Author: "},
+                        {"type": "user", "user_id": "U123ABC"},
+                        {"type": "text", "text": "\nDate: 2024-01-01"},
+                    ],
+                }
+            ],
+        }
+        ast = parse_rich_text(rich_text)
+        code_block = ast.children[0]
+        assert isinstance(code_block, CodeBlock)
+        # User mention should be rendered as plain text (e.g., <@U123ABC>)
+        assert "U123ABC" in code_block.content or "@U123ABC" in code_block.content
+        assert "Author:" in code_block.content
+
+    def test_preformatted_with_channel_mention(self):
+        """Test channel mention in preformatted block."""
+        rich_text = {
+            "type": "rich_text",
+            "elements": [
+                {
+                    "type": "rich_text_preformatted",
+                    "elements": [
+                        {"type": "text", "text": "Post to "},
+                        {"type": "channel", "channel_id": "C123XYZ"},
+                        {"type": "text", "text": " channel"},
+                    ],
+                }
+            ],
+        }
+        ast = parse_rich_text(rich_text)
+        code_block = ast.children[0]
+        assert isinstance(code_block, CodeBlock)
+        # Channel mention should be rendered as plain text
+        assert "C123XYZ" in code_block.content or "#C123XYZ" in code_block.content
+        assert "Post to" in code_block.content
+
+    def test_preformatted_with_usergroup_mention(self):
+        """Test usergroup mention in preformatted block."""
+        rich_text = {
+            "type": "rich_text",
+            "elements": [
+                {
+                    "type": "rich_text_preformatted",
+                    "elements": [
+                        {"type": "text", "text": "CC: "},
+                        {"type": "usergroup", "usergroup_id": "S123DEF"},
+                        {"type": "text", "text": " team"},
+                    ],
+                }
+            ],
+        }
+        ast = parse_rich_text(rich_text)
+        code_block = ast.children[0]
+        assert isinstance(code_block, CodeBlock)
+        # Usergroup mention should be rendered as plain text
+        assert "S123DEF" in code_block.content or "@S123DEF" in code_block.content
+        assert "CC:" in code_block.content
+
+    def test_preformatted_with_emoji(self):
+        """Test emoji in preformatted block."""
+        rich_text = {
+            "type": "rich_text",
+            "elements": [
+                {
+                    "type": "rich_text_preformatted",
+                    "elements": [
+                        {"type": "text", "text": "Status: "},
+                        {"type": "emoji", "name": "white_check_mark", "unicode": "✅"},
+                        {"type": "text", "text": " Success"},
+                    ],
+                }
+            ],
+        }
+        ast = parse_rich_text(rich_text)
+        code_block = ast.children[0]
+        assert isinstance(code_block, CodeBlock)
+        # Emoji should be rendered as unicode or :emoji_name:
+        assert "✅" in code_block.content or "white_check_mark" in code_block.content
+        assert "Status:" in code_block.content
+
+    def test_preformatted_with_broadcast(self):
+        """Test broadcast in preformatted block."""
+        rich_text = {
+            "type": "rich_text",
+            "elements": [
+                {
+                    "type": "rich_text_preformatted",
+                    "elements": [
+                        {"type": "text", "text": "Notify: "},
+                        {"type": "broadcast", "range": "here"},
+                        {"type": "text", "text": " immediately"},
+                    ],
+                }
+            ],
+        }
+        ast = parse_rich_text(rich_text)
+        code_block = ast.children[0]
+        assert isinstance(code_block, CodeBlock)
+        # Broadcast should be rendered as plain text
+        assert "here" in code_block.content or "@here" in code_block.content
+        assert "Notify:" in code_block.content
+
+    def test_preformatted_with_date(self):
+        """Test date timestamp in preformatted block."""
+        rich_text = {
+            "type": "rich_text",
+            "elements": [
+                {
+                    "type": "rich_text_preformatted",
+                    "elements": [
+                        {"type": "text", "text": "Deployed at: "},
+                        {
+                            "type": "date",
+                            "timestamp": 1704067200,
+                            "format": "{date_short_pretty}",
+                            "fallback": "Jan 1, 2024",
+                        },
+                    ],
+                }
+            ],
+        }
+        ast = parse_rich_text(rich_text)
+        code_block = ast.children[0]
+        assert isinstance(code_block, CodeBlock)
+        # Date should be rendered as plain text (timestamp or fallback)
+        assert "1704067200" in code_block.content or "Jan 1, 2024" in code_block.content
+        assert "Deployed at:" in code_block.content
+
+    def test_preformatted_with_multiple_links(self):
+        """Test multiple links in preformatted block."""
+        rich_text = {
+            "type": "rich_text",
+            "elements": [
+                {
+                    "type": "rich_text_preformatted",
+                    "elements": [
+                        {"type": "text", "text": "API: "},
+                        {"type": "link", "url": "https://api.example.com"},
+                        {"type": "text", "text": "\nDocs: "},
+                        {"type": "link", "url": "https://docs.example.com"},
+                    ],
+                }
+            ],
+        }
+        ast = parse_rich_text(rich_text)
+        code_block = ast.children[0]
+        assert isinstance(code_block, CodeBlock)
+        assert "https://api.example.com" in code_block.content
+        assert "https://docs.example.com" in code_block.content
+
+    def test_preformatted_roundtrip_with_link(self):
+        """Test that preformatted blocks with links can round-trip through GFM."""
+        rich_text = {
+            "type": "rich_text",
+            "elements": [
+                {
+                    "type": "rich_text_preformatted",
+                    "elements": [
+                        {"type": "text", "text": "URL: "},
+                        {"type": "link", "url": "https://example.com"},
+                    ],
+                }
+            ],
+        }
+        ast = parse_rich_text(rich_text)
+        gfm = render_gfm(ast)
+
+        # The GFM should contain the URL as plain text in a code block
+        assert "```" in gfm
+        assert "https://example.com" in gfm
+        assert "URL:" in gfm

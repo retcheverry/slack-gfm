@@ -1,6 +1,5 @@
 """Visitor pattern implementation for AST traversal and transformation."""
 
-
 from .nodes import (
     AnyNode,
     Bold,
@@ -55,9 +54,15 @@ class NodeVisitor:
         """Default visitor for nodes without specific visit_* methods.
 
         Recursively visits all children.
+        Since nodes are frozen (immutable), we create a new node with transformed children.
         """
         if hasattr(node, "children") and node.children:
-            node.children = [self.visit(child) for child in node.children]
+            from dataclasses import replace
+
+            new_children = [self.visit(child) for child in node.children]
+            # Only create a new node if children actually changed
+            if new_children != list(node.children):
+                return replace(node, children=new_children)
         return node
 
     # Visitor methods for each node type
